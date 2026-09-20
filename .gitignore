@@ -1,0 +1,14 @@
+# server
+server/.env
+server/data/
+server/certs/
+server/client-dist/
+server/__pycache__/
+server/**/__pycache__/
+*.pyc
+
+# client
+client/node_modules/
+client/dist/
+client/src-tauri/target/
+client/src-tauri/gen/

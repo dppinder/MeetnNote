@@ -1,0 +1,424 @@
+:root {
+  --bg: #ffffff;
+  --bg-alt: #f5f5f4;
+  --border: #e5e5e3;
+  --text: #1a1a19;
+  --text-muted: #77756f;
+  --accent: #d97757;
+  --accent-text: #ffffff;
+  --danger: #c0392b;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1c1a;
+    --bg-alt: #262624;
+    --border: #3a3a37;
+    --text: #f0efec;
+    --text-muted: #9a988f;
+    --accent: #d97757;
+    --accent-text: #1a1a19;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--bg-alt);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 6px 12px;
+}
+
+button.primary {
+  background: var(--accent);
+  color: var(--accent-text);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+input,
+textarea,
+select {
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+.app {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.mobile-topbar {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  padding-top: calc(10px + env(safe-area-inset-top));
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.mobile-topbar-title {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.sidebar-backdrop {
+  display: none;
+}
+
+.sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  gap: 10px;
+}
+
+.sidebar-header {
+  display: flex;
+  gap: 8px;
+}
+
+.new-meeting-btn {
+  flex: 1;
+}
+
+.icon-btn {
+  width: 34px;
+}
+
+.search-box {
+  width: 100%;
+}
+
+.meeting-list {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.meeting-item {
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.meeting-item:hover {
+  background: var(--bg-alt);
+}
+
+.meeting-item.selected {
+  background: var(--bg-alt);
+  border: 1px solid var(--accent);
+}
+
+.meeting-item-title {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meeting-item-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.badge-recording {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.meeting-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.meeting-view-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.title-input {
+  flex: 1;
+  font-size: 18px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  padding: 4px;
+}
+
+.title-input:focus {
+  outline: 1px solid var(--border);
+}
+
+.recording-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.record-btn {
+  color: var(--danger);
+}
+
+.stop-btn {
+  background: var(--danger);
+  color: white;
+  border-color: var(--danger);
+}
+
+.meeting-view-body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.pane {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 20px;
+  overflow-y: auto;
+}
+
+.transcript-pane {
+  border-right: 1px solid var(--border);
+}
+
+.transcript-scroll {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.transcript-line {
+  margin: 0 0 10px 0;
+  line-height: 1.5;
+}
+
+.transcript-line.interim {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.speaker-label {
+  font-weight: 600;
+}
+
+.notes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.notes-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.notes-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.notes-form textarea {
+  resize: vertical;
+  font-family: inherit;
+  color: var(--text);
+}
+
+.empty-state {
+  color: var(--text-muted);
+  padding: 20px 0;
+}
+
+.empty-state.centered {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.error-banner {
+  background: #fdecea;
+  color: var(--danger);
+  padding: 8px 16px;
+  font-size: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.error-banner button {
+  border: none;
+  background: none;
+  text-decoration: underline;
+  padding: 0;
+  color: inherit;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.modal {
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 24px;
+  width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.modal label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  align-items: center;
+}
+
+.status-ok {
+  color: #2e7d32;
+  font-size: 13px;
+}
+
+.status-error {
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-muted);
+}
+
+/* ---------- mobile (phone) layout ---------- */
+
+@media (max-width: 760px) {
+  .mobile-topbar {
+    display: flex;
+  }
+
+  .app {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(82vw, 320px);
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+    z-index: 30;
+    background: var(--bg);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.2);
+    padding-top: calc(12px + env(safe-area-inset-top));
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 25;
+  }
+
+  .meeting-view-header {
+    flex-wrap: wrap;
+  }
+
+  .recording-controls {
+    flex-wrap: wrap;
+  }
+
+  .meeting-view-body {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .pane {
+    max-height: 48vh;
+  }
+
+  .transcript-pane {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .main-content {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}

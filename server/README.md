@@ -1,0 +1,149 @@
+# MeetnNote — server
+
+FastAPI service that runs on your GPU box (`3060`, RTX 3060 12GB). Handles:
+
+- Live streaming transcription (faster-whisper on GPU)
+- AI meeting-notes generation (Ollama, local LLM — Llama 3.1 8B by default, Mistral 7B fallback)
+- Meeting/transcript/notes storage (SQLite)
+
+## Deploy to `3060`
+
+From your Mac:
+
+```bash
+rsync -av --exclude venv --exclude data --exclude __pycache__ \
+  meetnnote/server/ 3060:~/meetnnote/server/
+ssh 3060
+```
+
+Then on `3060`:
+
+```bash
+cd ~/meetnnote/server
+chmod +x deploy/setup.sh
+./deploy/setup.sh
+```
+
+This creates a dedicated venv (`~/meetnnote-env`, separate from your existing
+`~/legal-inference-env`), installs deps, installs/starts Ollama if needed, pulls
+`llama3.1:8b` and `mistral:7b-instruct`, writes `.env` with a random auth
+token, and generates a self-signed TLS cert (see below — needed for the
+iPhone web app).
+
+> **Note on VRAM:** `ollama pull llama3.1:8b` fetches the quantized (~Q4, ~4.7GB)
+> version, not the 16GB fp16 checkpoint you tried to fine-tune earlier. That,
+> plus `faster-whisper` (medium, int8_float16, ~1-2GB), comfortably fits in
+> 12GB alongside normal desktop use.
+
+### HTTPS (required for recording from an iPhone)
+
+iOS Safari only allows microphone access on `https://` (or `localhost`), so
+the server needs a TLS cert to be usable from a phone browser — the Tauri
+desktop app doesn't strictly need this, but it works the same way either way.
+`setup.sh` runs this automatically; to regenerate or point at a different
+IP/hostname:
+
+```bash
+./deploy/gen-selfsigned-cert.sh 192.168.1.162 3060
+```
+
+Then **trust the cert** on every device that'll connect:
+
+- **iPhone:** AirDrop `certs/cert.pem` to it (or serve the file and open the
+  link in Safari) → it prompts "Profile Downloaded" → Settings → General →
+  VPN & Device Management → install the profile → Settings → General → About
+  → Certificate Trust Settings → enable full trust for it.
+- **Mac** (only needed if the Tauri desktop app also talks to this server
+  over https): double-click `cert.pem` → Keychain Access → find it → set to
+  "Always Trust".
+
+This is a one-time step per device. Without it, browsers will refuse the
+connection outright (self-signed certs aren't trusted by default) — clicking
+through a security warning is not reliable for enabling microphone access,
+so don't skip the trust step.
+
+### Serving the web app to your phone
+
+Build the client and copy its output next to the server, so `3060` serves
+the app itself as well as the API — your phone just browses to the server's
+URL and gets MeetnNote, installable via Safari's "Add to Home Screen":
+
+```bash
+# on your Mac
+cd client && npm install && npm run build
+rsync -av dist/ 3060:~/meetnnote/server/client-dist/
+```
+
+The server automatically serves it if `client-dist/` exists next to
+`app/` (see `STATIC_DIR` in `.env.example`); if it's missing, the server
+just runs API-only, which is fine if you only ever use the Tauri desktop app.
+
+### Run it
+
+Quick test, foreground:
+
+```bash
+source ~/meetnnote-env/bin/activate
+cd ~/meetnnote/server
+uvicorn app.main:app --host 0.0.0.0 --port 8443 --ssl-keyfile certs/key.pem --ssl-certfile certs/cert.pem
+```
+
+Persistent, as a systemd service:
+
+```bash
+sudo cp deploy/meetnnote.service /etc/systemd/system/
+sudo nano /etc/systemd/system/meetnnote.service   # fix YOUR_USERNAME paths
+sudo systemctl daemon-reload
+sudo systemctl enable --now meetnnote
+sudo systemctl status meetnnote
+```
+
+Then on your iPhone: open `https://192.168.1.162:8443` in Safari, tap Share
+→ **Add to Home Screen**. On your Mac, point the Tauri app's Settings at the
+same URL.
+
+### Firewall
+
+Only allow it from your LAN:
+
+```bash
+sudo ufw allow from 192.168.1.0/24 to any port 8443 proto tcp
+```
+
+### Config (`.env`)
+
+See `.env.example`. Key values:
+
+- `AUTH_TOKEN` — bearer token the client must send. Generated randomly by `setup.sh`; copy it into the client's Settings screen.
+- `WHISPER_MODEL` / `WHISPER_COMPUTE_TYPE` — tune for speed vs. accuracy. `medium` + `int8_float16` is a good default on a 3060; try `large-v3` if you want better accuracy and have VRAM headroom.
+- `OLLAMA_MODEL` / `OLLAMA_FALLBACK_MODEL` — which local models generate notes.
+- `STATIC_DIR` — where the built web client lives (default `./client-dist`); the server serves it if present, runs API-only if not.
+
+## API
+
+All REST endpoints require `Authorization: Bearer <AUTH_TOKEN>`.
+
+- `POST /meetings` — create a meeting (`title`, `attendees`)
+- `GET /meetings?q=` — list/search meetings
+- `GET /meetings/{id}` — meeting + transcript segments + notes
+- `PATCH /meetings/{id}` — update title/attendees/status
+- `DELETE /meetings/{id}`
+- `POST /meetings/{id}/generate-notes` — run the LLM over the stored transcript, save + return structured notes
+- `PATCH /meetings/{id}/notes` — manually edit notes (marks `edited_by_user`)
+- `GET /health` — no auth, for monitoring
+
+### Live transcription — `wss://<host>:8443/meetings/{id}/audio?token=<AUTH_TOKEN>`
+
+Client sends **binary frames**: raw PCM16, mono, 16kHz, in small chunks (e.g. every 250-500ms of audio).
+
+Client sends **one text frame** to stop: `{"action": "stop"}` — server flushes remaining audio and closes.
+
+Server sends **text (JSON) frames**:
+
+```jsonc
+{"type": "interim", "text": "...still-being-transcribed tail..."}
+{"type": "final", "segment": {"start_ms": 0, "end_ms": 2340, "text": "..."}}
+{"type": "stopped"}
+```
+
+`final` segments are already persisted to the DB when sent. `interim` is a live preview only — it is replaced by the next update, never stored.
