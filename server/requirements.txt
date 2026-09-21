@@ -10,3 +10,6 @@ python-multipart==0.0.20
 numpy==1.26.4
 websockets==14.1
 aiofiles==24.1.0
+# faster-whisper -> huggingface_hub imports this directly, but newer
+# huggingface_hub releases don't always pull it in as a hard dependency.
+requests==2.32.3
