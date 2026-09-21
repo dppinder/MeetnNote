@@ -14,7 +14,7 @@ EnvironmentFile=/home/YOUR_USERNAME/meetnnote/server/.env
 # see server/README.md's "Recommended: Tailscale" section. The self-signed
 # cert path (--ssl-keyfile/--ssl-certfile) still works if you'd rather not
 # use Tailscale; see that same README section for the fallback command.
-ExecStart=/home/YOUR_USERNAME/meetnnote-env/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+ExecStart=/home/YOUR_USERNAME/meetnnote-env/bin/uvicorn app.main:app --host 0.0.0.0 --port 8010
 Restart=on-failure
 RestartSec=3
 

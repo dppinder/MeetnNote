@@ -76,7 +76,7 @@ self-signed `https://192.168.1.162:8443` fallback) in Safari and tap Share
 → **Add to Home Screen**.
 
 **3. Connect them:** in the Mac app, go to Settings (⚙) and enter
-`http://192.168.1.162:8000` and the token from step 1, then "Test connection".
+`http://192.168.1.162:8010` and the token from step 1, then "Test connection".
 The iPhone version defaults its server address to wherever it was loaded
 from, so it just needs the token.
 

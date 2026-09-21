@@ -110,7 +110,7 @@ Tailscale in front of this or the `--ssl-keyfile`/`--ssl-certfile` fallback):
 ```bash
 source ~/meetnnote-env/bin/activate
 cd ~/meetnnote/server
-uvicorn app.main:app --host 0.0.0.0 --port 8000
+uvicorn app.main:app --host 0.0.0.0 --port 8010
 ```
 
 Persistent, as a systemd service:
@@ -123,7 +123,7 @@ sudo systemctl enable --now meetnnote
 sudo systemctl status meetnnote
 ```
 
-Then: on your Mac, point the Tauri app's Settings at `http://192.168.1.162:8000`.
+Then: on your Mac, point the Tauri app's Settings at `http://192.168.1.162:8010`.
 On your iPhone, use the Tailscale URL from `setup-tailscale.sh` (or the
 self-signed `https://192.168.1.162:8443` fallback) in Safari, tap Share →
 **Add to Home Screen**.
@@ -134,7 +134,7 @@ Only allow the plain-HTTP port from your LAN — Tailscale traffic doesn't
 touch this, it arrives over the `tailscale0` interface instead:
 
 ```bash
-sudo ufw allow from 192.168.1.0/24 to any port 8000 proto tcp
+sudo ufw allow from 192.168.1.0/24 to any port 8010 proto tcp
 ```
 
 If you're using the self-signed-cert fallback instead of Tailscale, open
@@ -162,7 +162,7 @@ All REST endpoints require `Authorization: Bearer <AUTH_TOKEN>`.
 - `PATCH /meetings/{id}/notes` — manually edit notes (marks `edited_by_user`)
 - `GET /health` — no auth, for monitoring
 
-### Live transcription — `ws://<host>:8000/meetings/{id}/audio?token=<AUTH_TOKEN>`
+### Live transcription — `ws://<host>:8010/meetings/{id}/audio?token=<AUTH_TOKEN>`
 
 (`wss://` on whatever port you're serving HTTPS on, if using Tailscale or the self-signed-cert fallback.)
 

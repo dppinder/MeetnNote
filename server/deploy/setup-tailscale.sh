@@ -5,10 +5,10 @@
 # device. Run this ON THE 3060 BOX.
 #
 # Prerequisites: MeetnNote itself already running on plain HTTP (see
-# deploy/meetnnote.service or run uvicorn manually on port 8000).
+# deploy/meetnnote.service or run uvicorn manually on port 8010).
 set -euo pipefail
 
-APP_PORT="${1:-8000}"
+APP_PORT="${1:-8010}"
 
 echo "==> Checking Tailscale..."
 if ! command -v tailscale &>/dev/null; then
