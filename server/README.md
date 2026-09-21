@@ -49,10 +49,25 @@ IP/hostname:
 
 Then **trust the cert** on every device that'll connect:
 
-- **iPhone:** AirDrop `certs/cert.pem` to it (or serve the file and open the
-  link in Safari) → it prompts "Profile Downloaded" → Settings → General →
-  VPN & Device Management → install the profile → Settings → General → About
-  → Certificate Trust Settings → enable full trust for it.
+- **iPhone:** AirDrop `certs/cert.pem` to it → it should prompt "Profile
+  Downloaded" → Settings → General → VPN & Device Management → install the
+  profile → Settings → General → About → Certificate Trust Settings →
+  enable full trust for it.
+
+  In practice, a bare `.pem` (or even a renamed `.cer`/`.der`) sometimes
+  doesn't register as installable, depending on iOS version and how it was
+  transferred — if VPN & Device Management shows nothing after AirDropping
+  it, build a proper `.mobileconfig` profile instead (the format Apple's own
+  tools use, recognized unambiguously regardless of transfer method):
+
+  ```bash
+  # on your Mac, needs openssl + uuidgen (both built in)
+  ./deploy/make-ios-profile.sh path/to/cert.pem
+  ```
+
+  AirDrop the resulting `meetnnote-trust.mobileconfig` instead — this one
+  reliably shows up under VPN & Device Management to install.
+
 - **Mac** (only needed if the Tauri desktop app also talks to this server
   over https): double-click `cert.pem` → Keychain Access → find it → set to
   "Always Trust".
