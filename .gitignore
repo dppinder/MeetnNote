@@ -12,3 +12,4 @@ client/node_modules/
 client/dist/
 client/src-tauri/target/
 client/src-tauri/gen/
+client/tsconfig.tsbuildinfo
