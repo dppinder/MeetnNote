@@ -26,56 +26,65 @@ chmod +x deploy/setup.sh
 
 This creates a dedicated venv (`~/meetnnote-env`, separate from your existing
 `~/legal-inference-env`), installs deps, installs/starts Ollama if needed, pulls
-`llama3.1:8b` and `mistral:7b-instruct`, writes `.env` with a random auth
-token, and generates a self-signed TLS cert (see below — needed for the
-iPhone web app).
+`llama3.1:8b` and `mistral:7b-instruct`, and writes `.env` with a random auth
+token.
 
 > **Note on VRAM:** `ollama pull llama3.1:8b` fetches the quantized (~Q4, ~4.7GB)
 > version, not the 16GB fp16 checkpoint you tried to fine-tune earlier. That,
 > plus `faster-whisper` (medium, int8_float16, ~1-2GB), comfortably fits in
 > 12GB alongside normal desktop use.
 
-### HTTPS (required for recording from an iPhone)
+### HTTPS for the iPhone (recommended: Tailscale)
 
-iOS Safari only allows microphone access on `https://` (or `localhost`), so
-the server needs a TLS cert to be usable from a phone browser — the Tauri
-desktop app doesn't strictly need this, but it works the same way either way.
-`setup.sh` runs this automatically; to regenerate or point at a different
-IP/hostname:
+iOS Safari only allows microphone access on `https://` (or `localhost`).
+The Tauri desktop app doesn't have this problem — its WebView origin is
+already trusted, so it talks to the plain-HTTP server below with no
+changes needed. Only the iPhone PWA needs an HTTPS path in.
+
+**Recommended: Tailscale.** It issues this box a real, publicly-trusted
+certificate (via Let's Encrypt) for its tailnet address — no self-signed
+cert, no manual "trust this" dance on the phone at all, and it also gives
+you access to `3060` from outside your house for free:
+
+```bash
+./deploy/setup-tailscale.sh
+```
+
+Follow its printed instructions (sign in, enable HTTPS Certificates once in
+the Tailscale admin console, run `tailscale serve`). Install the Tailscale
+app on your iPhone from the App Store, sign into the same account, and open
+the `https://<device>.<tailnet>.ts.net` URL it gives you in Safari — no cert
+to trust, it just works.
+
+**Fallback: self-signed cert**, if you'd rather not run Tailscale:
 
 ```bash
 ./deploy/gen-selfsigned-cert.sh 192.168.1.162 3060
 ```
 
-Then **trust the cert** on every device that'll connect:
+Then run uvicorn with `--ssl-keyfile certs/key.pem --ssl-certfile certs/cert.pem`
+on a port like 8443 instead of the plain-HTTP command below, and **trust the
+cert** on your iPhone: AirDrop `certs/cert.pem` to it → it should prompt
+"Profile Downloaded" → Settings → General → VPN & Device Management →
+install the profile → Settings → General → About → Certificate Trust
+Settings → enable full trust for it.
 
-- **iPhone:** AirDrop `certs/cert.pem` to it → it should prompt "Profile
-  Downloaded" → Settings → General → VPN & Device Management → install the
-  profile → Settings → General → About → Certificate Trust Settings →
-  enable full trust for it.
+In practice a bare `.pem` (or a renamed `.cer`/`.der`) sometimes doesn't
+register as installable, depending on iOS version and transfer method — if
+VPN & Device Management shows nothing after AirDropping it, build a proper
+`.mobileconfig` profile instead (the format Apple's own tools use,
+recognized unambiguously regardless of transfer method):
 
-  In practice, a bare `.pem` (or even a renamed `.cer`/`.der`) sometimes
-  doesn't register as installable, depending on iOS version and how it was
-  transferred — if VPN & Device Management shows nothing after AirDropping
-  it, build a proper `.mobileconfig` profile instead (the format Apple's own
-  tools use, recognized unambiguously regardless of transfer method):
+```bash
+# on your Mac, needs openssl + uuidgen (both built in)
+./deploy/make-ios-profile.sh path/to/cert.pem
+```
 
-  ```bash
-  # on your Mac, needs openssl + uuidgen (both built in)
-  ./deploy/make-ios-profile.sh path/to/cert.pem
-  ```
-
-  AirDrop the resulting `meetnnote-trust.mobileconfig` instead — this one
-  reliably shows up under VPN & Device Management to install.
-
-- **Mac** (only needed if the Tauri desktop app also talks to this server
-  over https): double-click `cert.pem` → Keychain Access → find it → set to
-  "Always Trust".
-
-This is a one-time step per device. Without it, browsers will refuse the
-connection outright (self-signed certs aren't trusted by default) — clicking
-through a security warning is not reliable for enabling microphone access,
-so don't skip the trust step.
+AirDrop the resulting `meetnnote-trust.mobileconfig` instead — this one
+reliably shows up under VPN & Device Management to install. This is a
+one-time step per device; without it, browsers refuse the connection
+outright rather than just showing a warning, since self-signed certs
+aren't trusted by default.
 
 ### Serving the web app to your phone
 
@@ -95,12 +104,13 @@ just runs API-only, which is fine if you only ever use the Tauri desktop app.
 
 ### Run it
 
-Quick test, foreground:
+Quick test, foreground (plain HTTP — see above for adding TLS, either via
+Tailscale in front of this or the `--ssl-keyfile`/`--ssl-certfile` fallback):
 
 ```bash
 source ~/meetnnote-env/bin/activate
 cd ~/meetnnote/server
-uvicorn app.main:app --host 0.0.0.0 --port 8443 --ssl-keyfile certs/key.pem --ssl-certfile certs/cert.pem
+uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
 Persistent, as a systemd service:
@@ -113,17 +123,22 @@ sudo systemctl enable --now meetnnote
 sudo systemctl status meetnnote
 ```
 
-Then on your iPhone: open `https://192.168.1.162:8443` in Safari, tap Share
-→ **Add to Home Screen**. On your Mac, point the Tauri app's Settings at the
-same URL.
+Then: on your Mac, point the Tauri app's Settings at `http://192.168.1.162:8000`.
+On your iPhone, use the Tailscale URL from `setup-tailscale.sh` (or the
+self-signed `https://192.168.1.162:8443` fallback) in Safari, tap Share →
+**Add to Home Screen**.
 
 ### Firewall
 
-Only allow it from your LAN:
+Only allow the plain-HTTP port from your LAN — Tailscale traffic doesn't
+touch this, it arrives over the `tailscale0` interface instead:
 
 ```bash
-sudo ufw allow from 192.168.1.0/24 to any port 8443 proto tcp
+sudo ufw allow from 192.168.1.0/24 to any port 8000 proto tcp
 ```
+
+If you're using the self-signed-cert fallback instead of Tailscale, open
+8443 the same way.
 
 ### Config (`.env`)
 
@@ -147,7 +162,9 @@ All REST endpoints require `Authorization: Bearer <AUTH_TOKEN>`.
 - `PATCH /meetings/{id}/notes` — manually edit notes (marks `edited_by_user`)
 - `GET /health` — no auth, for monitoring
 
-### Live transcription — `wss://<host>:8443/meetings/{id}/audio?token=<AUTH_TOKEN>`
+### Live transcription — `ws://<host>:8000/meetings/{id}/audio?token=<AUTH_TOKEN>`
+
+(`wss://` on whatever port you're serving HTTPS on, if using Tailscale or the self-signed-cert fallback.)
 
 Client sends **binary frames**: raw PCM16, mono, 16kHz, in small chunks (e.g. every 250-500ms of audio).
 

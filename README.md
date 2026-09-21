@@ -6,7 +6,7 @@ note generation) runs on your own GPU box instead of a SaaS vendor.
 - **`server/`** — FastAPI service for the `3060` box (RTX 3060 12GB, Ubuntu). Streams
   live transcription (faster-whisper) and generates structured meeting notes
   (Ollama + Llama 3.1 8B / Mistral 7B). Also serves the web client (below)
-  directly, over HTTPS. See [server/README.md](server/README.md).
+  directly. See [server/README.md](server/README.md).
 - **`client/`** — React/TS app, the same code runs two ways:
   - Wrapped in **Tauri** as a native desktop app for your Mac.
   - As a plain **PWA** served by the `3060` server itself — open its URL in
@@ -25,11 +25,16 @@ rsync -av --exclude venv --exclude data --exclude __pycache__ --exclude certs \
 ssh 3060 'cd ~/meetnnote/server && chmod +x deploy/setup.sh && ./deploy/setup.sh'
 ```
 
-This also generates a self-signed TLS cert (needed for mic access from an
-iPhone — see `server/README.md`'s HTTPS section for the one-time
-"trust this cert" step on your phone/Mac). Copy the `AUTH_TOKEN` it writes to
-`server/.env` on the box — you'll need it below. Then either run it in the
-foreground to test, or install the systemd service (see `server/README.md`).
+Copy the `AUTH_TOKEN` it writes to `server/.env` on the box — you'll need it
+below. Then either run it in the foreground to test, or install the systemd
+service (see `server/README.md`).
+
+The server runs plain HTTP by default — that's fine for the Mac desktop app.
+The iPhone needs an HTTPS path in, since iOS Safari refuses microphone
+access otherwise; run `./deploy/setup-tailscale.sh` on `3060` for that (gets
+a real, trusted cert automatically, plus access from outside your house —
+see `server/README.md`'s HTTPS section for the self-signed-cert fallback if
+you'd rather not use Tailscale).
 
 **2. Build the client:**
 
@@ -60,11 +65,12 @@ serves the app itself:
 rsync -av dist/ 3060:~/meetnnote/server/client-dist/
 ```
 
-Then on the iPhone, open `https://192.168.1.162:8443` in Safari and tap Share
+Then on the iPhone, open the Tailscale URL from `setup-tailscale.sh` (or the
+self-signed `https://192.168.1.162:8443` fallback) in Safari and tap Share
 → **Add to Home Screen**.
 
 **3. Connect them:** in the Mac app, go to Settings (⚙) and enter
-`https://192.168.1.162:8443` and the token from step 1, then "Test connection".
+`http://192.168.1.162:8000` and the token from step 1, then "Test connection".
 The iPhone version defaults its server address to wherever it was loaded
 from, so it just needs the token.
 
@@ -96,9 +102,9 @@ from, so it just needs the token.
   buffer and finalizes settled segments. Good enough for live notes, not
   word-perfect real-time captioning.
 - **No speaker diarization yet** — transcripts aren't labeled by speaker.
-- **LAN-only auth** — a single shared bearer token, fine behind your router,
-  not meant to be exposed to the internet as-is. If you want to use this from
-  outside your house, put it behind Tailscale rather than opening a port.
+- **Auth is a single shared bearer token** — fine behind your router or
+  Tailscale, not meant to be exposed directly to the open internet (e.g. via
+  port forwarding).
 - **No calendar integration, no chat-with-your-notes, no templates yet** —
   planned as v2, see below.
 - **iPhone recording needs the screen on and the tab in the foreground.**
@@ -109,9 +115,11 @@ from, so it just needs the token.
   for capturing the other side of a phone call — the iPhone client is really
   for in-person meetings (or anything playing through the phone's own mic),
   not recording phone calls.
-- **The self-signed cert needs a one-time manual trust step** on each device
-  (see `server/README.md`) — that's the tradeoff for not depending on a
-  public domain name or a paid certificate for a LAN-only server.
+- **If you skip Tailscale and use the self-signed-cert fallback instead**,
+  it needs a one-time manual trust step on each device (see
+  `server/README.md`) — and in practice iOS doesn't always recognize a bare
+  `.pem`/`.cer` as installable, so that fallback path also ships a
+  `.mobileconfig` generator as a second-line fix.
 
 ## v2 ideas (not built yet)
 
@@ -119,4 +127,3 @@ from, so it just needs the token.
 - Calendar auto-detect meetings (Google/Outlook)
 - Speaker diarization (pyannote.audio)
 - Meeting templates
-- Tailscale-based remote access instructions

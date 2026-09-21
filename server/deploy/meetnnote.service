@@ -8,7 +8,13 @@ Wants=ollama.service
 User=YOUR_USERNAME
 WorkingDirectory=/home/YOUR_USERNAME/meetnnote/server
 EnvironmentFile=/home/YOUR_USERNAME/meetnnote/server/.env
-ExecStart=/home/YOUR_USERNAME/meetnnote-env/bin/uvicorn app.main:app --host 0.0.0.0 --port 8443 --ssl-keyfile certs/key.pem --ssl-certfile certs/cert.pem
+# Plain HTTP. The Tauri desktop app can talk to this directly over the LAN
+# (its WebView origin is trusted regardless). For the iPhone PWA, put
+# `tailscale serve` in front of this instead of adding TLS here directly —
+# see server/README.md's "Recommended: Tailscale" section. The self-signed
+# cert path (--ssl-keyfile/--ssl-certfile) still works if you'd rather not
+# use Tailscale; see that same README section for the fallback command.
+ExecStart=/home/YOUR_USERNAME/meetnnote-env/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
 Restart=on-failure
 RestartSec=3
 
