@@ -29,6 +29,7 @@ class NoteOut(BaseModel):
     discussion_points: list[str]
     decisions: list[str]
     action_items: list[str]
+    personal_notes: str
     edited_by_user: bool
     generated_at: datetime
     updated_at: datetime
@@ -41,6 +42,7 @@ class NoteUpdate(BaseModel):
     discussion_points: list[str] | None = None
     decisions: list[str] | None = None
     action_items: list[str] | None = None
+    personal_notes: str | None = None
 
 
 class MeetingOut(BaseModel):
@@ -57,3 +59,10 @@ class MeetingOut(BaseModel):
 class MeetingDetailOut(MeetingOut):
     segments: list[TranscriptSegmentOut]
     note: NoteOut | None
+
+
+class ActionItemEntry(BaseModel):
+    meeting_id: str
+    meeting_title: str
+    meeting_created_at: datetime
+    text: str

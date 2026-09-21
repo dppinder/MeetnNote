@@ -1,5 +1,5 @@
 import { httpBase, loadSettings } from "./settings";
-import type { Meeting, MeetingDetail, Note } from "./types";
+import type { ActionItemEntry, Meeting, MeetingDetail, Note } from "./types";
 
 class ApiError extends Error {
   constructor(
@@ -59,6 +59,8 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify(patch),
     }),
+
+  listActionItems: () => request<ActionItemEntry[]>("/action-items"),
 };
 
 export { ApiError };

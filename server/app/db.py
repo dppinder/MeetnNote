@@ -62,6 +62,9 @@ class Note(Base):
     discussion_points: Mapped[list] = mapped_column(JSON, default=list)
     decisions: Mapped[list] = mapped_column(JSON, default=list)
     action_items: Mapped[list] = mapped_column(JSON, default=list)
+    # Freeform scratch notes typed by the user during/after the meeting.
+    # Independent of the AI-generated fields above — Regenerate never touches this.
+    personal_notes: Mapped[str] = mapped_column(Text, default="")
     raw_model_output: Mapped[str] = mapped_column(Text, default="")
     edited_by_user: Mapped[bool] = mapped_column(default=False)
     generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)

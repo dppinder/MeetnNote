@@ -8,6 +8,7 @@ export function Sidebar({
   onNewMeeting,
   onSearch,
   onOpenSettings,
+  onOpenTasks,
   className = "",
 }: {
   meetings: Meeting[];
@@ -16,6 +17,7 @@ export function Sidebar({
   onNewMeeting: () => void;
   onSearch: (q: string) => void;
   onOpenSettings: () => void;
+  onOpenTasks?: () => void;
   className?: string;
 }) {
   const [query, setQuery] = useState("");
@@ -23,11 +25,23 @@ export function Sidebar({
   return (
     <div className={`sidebar ${className}`}>
       <div className="sidebar-header">
-        <button className="primary new-meeting-btn" onClick={onNewMeeting}>
-          + New meeting
+        <button className="primary pill new-meeting-btn" onClick={onNewMeeting}>
+          <span className="material-symbols-outlined" style={{ fontSize: 18, verticalAlign: "-4px" }}>
+            add
+          </span>{" "}
+          New meeting
         </button>
-        <button className="icon-btn" title="Settings" onClick={onOpenSettings}>
-          ⚙
+        {onOpenTasks && (
+          <button className="icon-btn pill" title="Tasks" onClick={onOpenTasks}>
+            <span className="material-symbols-outlined" style={{ fontSize: 20 }}>
+              check_circle
+            </span>
+          </button>
+        )}
+        <button className="icon-btn pill" title="Settings" onClick={onOpenSettings}>
+          <span className="material-symbols-outlined" style={{ fontSize: 20 }}>
+            settings
+          </span>
         </button>
       </div>
 

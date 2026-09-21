@@ -20,6 +20,7 @@ export interface Note {
   discussion_points: string[];
   decisions: string[];
   action_items: string[];
+  personal_notes: string;
   edited_by_user: boolean;
   generated_at: string;
   updated_at: string;
@@ -28,6 +29,13 @@ export interface Note {
 export interface MeetingDetail extends Meeting {
   segments: TranscriptSegment[];
   note: Note | null;
+}
+
+export interface ActionItemEntry {
+  meeting_id: string;
+  meeting_title: string;
+  meeting_created_at: string;
+  text: string;
 }
 
 export type WsServerMessage =

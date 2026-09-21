@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
 from app.db import init_db
-from app.routers import meetings, ws_transcribe
+from app.routers import meetings, tasks, ws_transcribe
 from app.services.transcription import load_model
 
 logging.basicConfig(level=logging.INFO)
@@ -33,6 +33,7 @@ app.add_middleware(
 )
 
 app.include_router(meetings.router)
+app.include_router(tasks.router)
 app.include_router(ws_transcribe.router)
 
 

@@ -112,7 +112,11 @@ async def update_notes(meeting_id: str, body: NoteUpdate, session: AsyncSession 
         note.decisions = body.decisions
     if body.action_items is not None:
         note.action_items = body.action_items
-    note.edited_by_user = True
+        note.edited_by_user = True
+    if body.summary is not None or body.discussion_points is not None or body.decisions is not None:
+        note.edited_by_user = True
+    if body.personal_notes is not None:
+        note.personal_notes = body.personal_notes
 
     await session.commit()
     await session.refresh(note)

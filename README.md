@@ -12,8 +12,14 @@ note generation) runs on your own GPU box instead of a SaaS vendor.
   - As a plain **PWA** served by the `3060` server itself — open its URL in
     mobile Safari and "Add to Home Screen" to record meetings from your
     iPhone. No app store, no separate build.
-  Records audio, shows a live transcript + AI notes side by side, stores
-  nothing locally — everything lives on the server.
+  Records audio, shows a live transcript, AI-generated notes, a personal
+  scratch-notes tab, and a cross-meeting Tasks view. Stores nothing locally
+  — everything lives on the server.
+
+Visual design (dark warm-editorial theme, Newsreader/Inter type, tabbed
+note view) comes from `DESIGN.md` / `code.html` / `screen.png` — a mockup
+generated with Google Stitch. Those files are the design reference, not
+part of the running app.
 
 ## Quickstart
 
@@ -81,6 +87,9 @@ from, so it just needs the token.
 - Generate AI-structured notes from the transcript (summary, discussion
   points, decisions, action items) via your local LLM
 - Edit notes by hand, they won't be overwritten unless you click Regenerate
+- Jot personal scratch notes per meeting, separate from the AI summary
+- A Tasks view aggregating action items across every meeting
+- Copy a meeting's notes as Markdown, or Share via the OS share sheet
 - Search/browse past meetings
 - Works from either the Mac desktop app or an iPhone (installed as a
   home-screen PWA) — same server, same meetings, either device

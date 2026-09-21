@@ -1,6 +1,13 @@
 import { useEffect, useRef } from "react";
 import type { TranscriptSegment } from "../lib/types";
 
+function formatTime(ms: number): string {
+  const totalSec = Math.floor(ms / 1000);
+  const min = Math.floor(totalSec / 60);
+  const sec = totalSec % 60;
+  return `${min}:${sec.toString().padStart(2, "0")}`;
+}
+
 export function TranscriptPane({
   segments,
   interimText,
@@ -14,22 +21,31 @@ export function TranscriptPane({
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [segments.length, interimText]);
 
+  if (segments.length === 0 && !interimText) {
+    return <div className="empty-state">Transcript will appear here once you start recording.</div>;
+  }
+
   return (
-    <div className="pane transcript-pane">
-      <h3>Transcript</h3>
-      <div className="transcript-scroll">
-        {segments.length === 0 && !interimText && (
-          <div className="empty-state">Transcript will appear here once you start recording.</div>
-        )}
-        {segments.map((seg) => (
-          <p key={seg.id} className="transcript-line">
-            {seg.speaker && <span className="speaker-label">{seg.speaker}: </span>}
+    <div className="transcript-scroll">
+      {segments.map((seg) => (
+        <div className="transcript-block" key={seg.id}>
+          <div className="transcript-block-head">
+            <span className="transcript-speaker">{seg.speaker || "Transcript"}</span>
+            <span className="transcript-time">{formatTime(seg.start_ms)}</span>
+          </div>
+          <p className="transcript-text" style={{ margin: 0 }}>
             {seg.text}
           </p>
-        ))}
-        {interimText && <p className="transcript-line interim">{interimText}</p>}
-        <div ref={bottomRef} />
-      </div>
+        </div>
+      ))}
+      {interimText && (
+        <div className="transcript-block">
+          <p className="transcript-text interim" style={{ margin: 0 }}>
+            {interimText}
+          </p>
+        </div>
+      )}
+      <div ref={bottomRef} />
     </div>
   );
 }
